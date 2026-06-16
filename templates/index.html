@@ -53,7 +53,20 @@
         <main>
             <!-- Error Banner -->
             <div id="error-banner" class="error-banner hidden">
-                <span class="error-message">Failed to load release notes. Please try again.</span>
+                <span class="error-message">Failed to load release notes. </span>
+                <button id="error-retry-btn" class="retry-link">Retry Now</button>
+            </div>
+
+            <!-- Search & Filters Container -->
+            <div class="search-container">
+                <div class="search-box">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" id="search-input" placeholder="Search release notes by keyword (e.g. JSON, Table, Partition)..." aria-label="Search release notes">
+                    <button id="clear-search-btn" class="clear-search-btn hidden" aria-label="Clear Search">&times;</button>
+                </div>
             </div>
 
             <!-- Notes Container -->
@@ -64,6 +77,9 @@
                 <div class="skeleton-card"></div>
             </div>
         </main>
+
+        <!-- Toast Notification Container -->
+        <div id="toast-container" class="toast-container"></div>
 
         <!-- Tweet Modal / Editor -->
         <div id="tweet-modal" class="modal hidden">
