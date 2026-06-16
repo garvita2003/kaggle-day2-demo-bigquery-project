@@ -21,12 +21,31 @@
                         <p class="subtitle">Stay updated with the latest Google Cloud BigQuery releases</p>
                     </div>
                 </div>
-                <button id="refresh-btn" class="btn btn-primary" aria-label="Refresh Release Notes">
-                    <span class="btn-text">Refresh</span>
-                    <svg class="spinner" id="spinner" viewBox="0 0 50 50">
-                        <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
-                    </svg>
-                </button>
+                <div class="header-actions">
+                    <!-- Export to CSV Button -->
+                    <button id="export-csv-btn" class="btn btn-secondary" aria-label="Export to CSV" disabled>
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                        </svg>
+                        Export CSV
+                    </button>
+                    <!-- Refresh Button -->
+                    <button id="refresh-btn" class="btn btn-primary" aria-label="Refresh Release Notes">
+                        <span class="btn-text">Refresh</span>
+                        <svg class="spinner" id="spinner" viewBox="0 0 50 50">
+                            <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="5"></circle>
+                        </svg>
+                    </button>
+                    <!-- Light/Dark Mode Toggle Switch -->
+                    <div class="theme-toggle-wrapper">
+                        <span class="theme-icon sun-icon">☀️</span>
+                        <label class="switch" for="theme-checkbox">
+                            <input type="checkbox" id="theme-checkbox" aria-label="Toggle light and dark theme">
+                            <span class="slider round"></span>
+                        </label>
+                        <span class="theme-icon moon-icon">🌙</span>
+                    </div>
+                </div>
             </div>
         </header>
 

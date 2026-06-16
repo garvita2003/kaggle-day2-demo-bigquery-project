@@ -13,10 +13,65 @@ document.addEventListener('DOMContentLoaded', () => {
     const charCountContainer = charCount.parentElement;
     const modalNoteTitle = document.getElementById('modal-note-title');
 
+    // Global list of parsed notes for CSV export
+    let fetchedNotesList = [];
+    const exportCsvBtn = document.getElementById('export-csv-btn');
+    const themeCheckbox = document.getElementById('theme-checkbox');
+
     let currentSelectedNote = null;
 
     // Load initial release notes
     fetchNotes();
+
+    // Theme Switch Logic
+    themeCheckbox.addEventListener('change', () => {
+        if (themeCheckbox.checked) {
+            document.documentElement.setAttribute('data-theme', 'light');
+            localStorage.setItem('theme', 'light');
+        } else {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            localStorage.setItem('theme', 'dark');
+        }
+    });
+
+    // Restore saved theme preference
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'light') {
+        themeCheckbox.checked = true;
+        document.documentElement.setAttribute('data-theme', 'light');
+    } else {
+        themeCheckbox.checked = false;
+        document.documentElement.setAttribute('data-theme', 'dark');
+    }
+
+    // Export to CSV Logic
+    exportCsvBtn.addEventListener('click', () => {
+        if (!fetchedNotesList || fetchedNotesList.length === 0) return;
+
+        // Formulate CSV headers and lines
+        const headers = ["Title", "Published Date", "Details Plain Text", "Link"];
+        const csvRows = [headers.map(h => `"${h.replace(/"/g, '""')}"`).join(",")];
+
+        fetchedNotesList.forEach(note => {
+            const dateStr = new Date(note.published).toLocaleDateString('en-US');
+            const row = [
+                note.title,
+                dateStr,
+                note.content_text,
+                note.link
+            ];
+            csvRows.push(row.map(val => `"${val.replace(/"/g, '""')}"`).join(","));
+        });
+
+        const csvContent = "data:text/csv;charset=utf-8," + csvRows.join("\n");
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `bigquery_release_notes_${new Date().toISOString().slice(0,10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    });
 
     // Event Listeners
     refreshBtn.addEventListener('click', fetchNotes);
@@ -55,6 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function fetchNotes() {
         showLoadingState();
         errorBanner.classList.add('hidden');
+        exportCsvBtn.disabled = true;
 
         try {
             const response = await fetch('/api/notes');
@@ -62,7 +118,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
 
             if (data.success) {
+                fetchedNotesList = data.notes;
                 renderNotes(data.notes);
+                exportCsvBtn.disabled = false;
             } else {
                 throw new Error(data.error || 'Failed to fetch release notes');
             }
@@ -131,12 +189,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     <a href="${note.link}" target="_blank" class="source-link" rel="noopener noreferrer">
                         View Official Source &rarr;
                     </a>
-                    <button class="btn btn-twitter tweet-btn">
-                        <svg class="twitter-icon" viewBox="0 0 24 24" width="16" height="16" style="margin-bottom: -2px;">
-                            <path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path>
-                        </svg>
-                        Tweet Note
-                    </button>
+                    <div class="card-action-buttons">
+                        <button class="btn btn-secondary copy-btn" title="Copy to Clipboard">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                            </svg>
+                            Copy
+                        </button>
+                        <button class="btn btn-twitter tweet-btn">
+                            <svg class="twitter-icon" viewBox="0 0 24 24" width="16" height="16" style="margin-bottom: -2px;">
+                                <path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path>
+                            </svg>
+                            Tweet
+                        </button>
+                    </div>
                 </div>
             `;
 
@@ -144,6 +211,33 @@ document.addEventListener('DOMContentLoaded', () => {
             const tweetBtn = card.querySelector('.tweet-btn');
             tweetBtn.addEventListener('click', () => {
                 showTweetModal(note, shortSummary);
+            });
+
+            // Attach event listener for Copy action
+            const copyBtn = card.querySelector('.copy-btn');
+            copyBtn.addEventListener('click', () => {
+                const textToCopy = `BigQuery Release Note (${formattedDate}):\n${note.title}\n\n${note.content_text}\n\nLink: ${note.link}`;
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    copyBtn.innerHTML = `
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--success)" stroke-width="2">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        Copied!
+                    `;
+                    copyBtn.style.color = "var(--success)";
+                    setTimeout(() => {
+                        copyBtn.innerHTML = `
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                            </svg>
+                            Copy
+                        `;
+                        copyBtn.style.color = "";
+                    }, 2000);
+                }).catch(err => {
+                    console.error('Failed to copy: ', err);
+                });
             });
 
             notesContainer.appendChild(card);
